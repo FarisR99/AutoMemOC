@@ -9,6 +9,10 @@ This program only works for Intel platforms and is optimised for 2 DIMM single r
 * Download your choice of a memory testor from the supported list below.
 * Download [AutoMemOC](https://github.com/KingFaris10/AutoMemOC/releases)
 * Run AutoMemOC as administrator.
+* If your system crashes due to unstable RAM settings, that's expected. Keep running AutoMemOC until the program tells you the discovered stable settings. Plug those numbers into your BIOS and you're done.
+
+
+Note: If the program's behaviour starts acting up, try deleting config.txt and restart the process again.
 
 ## Command-Line Arguments
 ### Tweaker path
