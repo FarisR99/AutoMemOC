@@ -4,6 +4,7 @@ Automatic memory overclocking tool.
 # Important Notes
 * This program only works for Intel platforms and is optimised for 2 DIMM single rank configuration only.
 * This program primarily tightens secondaries and tertiaries. tCL, tRAS and tCWL are untouched as they affect memory training.
+* This program requires you to find a stable frequency and primary timings, and optionally stable loose secondary and tertiary timings. * This program will not modify voltages. A tighter timing may be stable at higher/lower voltages, but this program will not detect that. 
 
 # Usage
 * Download and install your choice of a memory tweaker from the supported list below.
