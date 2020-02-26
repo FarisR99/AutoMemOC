@@ -17,12 +17,12 @@ Note: If the program's behaviour starts acting up, try deleting config.txt and r
 
 ## Command-Line Arguments
 ### Tweaker path
-Argument: --tweak <path>
+Argument: --tweak path
 
 Description: The directory where the tweaker executable file is located.
 
 ### Memory test path
-Argument: --test <path>
+Argument: --test path
 
 Description: The directory where the memory testing executable file is located.
 
