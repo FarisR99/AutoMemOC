@@ -41,7 +41,7 @@ Download and install MemTweakIt.
 * [Z390](https://dlcdnets.asus.com/pub/ASUS/mb/Utility/Mem_TweakIt_WIN10-64_V2.02.41.zip) - This may or may not work on your board, regardless of whether you have an ASUS board or not. This definitely works on ASUS Maximus XI series and works on my MSI MPG Z390I Gaming Edge AC.
 
 
-Run this program at least once before running AutoMemOC to ensure the tweaker does not show any warning/confirmation screens on load.
+Run this program at least once before running AutoMemOC to ensure the tweaker does not show any warning/confirmation screens on load and that it works with your board.
 
 ## Memory Tests
 ### TestMem5 (TM5)
