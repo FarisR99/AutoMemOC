@@ -1,8 +1,9 @@
 # AutoMemOC
 Automatic memory overclocking tool.
 
-# Important
-This program only works for Intel platforms and is optimised for 2 DIMM single rank configuration only.
+# Important Notes
+* This program only works for Intel platforms and is optimised for 2 DIMM single rank configuration only.
+* This program primarily tightens secondaries and tertiaries. tCL, tRAS and tCWL are untouched as they affect memory training.
 
 # Usage
 * Download and install your choice of a memory tweaker from the supported list below.
