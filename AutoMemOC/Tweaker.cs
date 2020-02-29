@@ -88,8 +88,12 @@ namespace AutoMemOC
 
         public override void Close()
         {
-            if (process != null && !process.HasExited)
-                process.Kill();
+            try
+            {
+                if (process != null && !process.HasExited)
+                    process.Kill();
+            }
+            catch (Exception) { }
 
             process = null;
             Started = false;

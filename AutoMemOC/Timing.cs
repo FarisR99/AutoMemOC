@@ -86,6 +86,16 @@ namespace AutoMemOC
             return displayName;
         }
 
+        public static Timing[] All()
+        {
+            Timing[] allTimings = new Timing[timings.Count];
+            for (int i = 0; i < allTimings.Length; ++i)
+            {
+                allTimings[i] = timings[i];
+            }
+            return allTimings;
+        }
+
         public static Timing FromName(string name)
         {
             if (name == null) return null;

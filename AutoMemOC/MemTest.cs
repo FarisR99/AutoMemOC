@@ -65,7 +65,10 @@ namespace AutoMemOC
 
             try
             {
-                process = Process.Start(exePath + "/" + ExeName());
+                var startInfo = new ProcessStartInfo();
+                startInfo.FileName = ExeName();
+                startInfo.WorkingDirectory = exePath;
+                process = Process.Start(startInfo);
             } catch (Exception e)
             {
                 if (Program.verboseLogging)
@@ -151,8 +154,12 @@ namespace AutoMemOC
 
         public override void Close()
         {
-            if (process != null && !process.HasExited)
-                process.Kill();
+            try
+            {
+                if (process != null && !process.HasExited)
+                    process.Kill();
+            }
+            catch (Exception) { }
 
             process = null;
             Started = false;

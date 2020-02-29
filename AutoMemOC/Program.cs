@@ -127,18 +127,43 @@ namespace AutoMemOC
                 memTest = new TestMem5(testPath);
             }
 
+            Dictionary<Timing, int> initialTimings = new Dictionary<Timing, int>();
+            foreach (Timing timing in Timing.All())
+            {
+                int timingValue = tweaker.GetTiming(timing);
+                if (timingValue == -1)
+                {
+                    FatalError();
+                    Console.Error.WriteLine("Failed to fetch current " + timing + "!");
+
+                    tweaker.Close();
+                    Console.ReadKey();
+                    return;
+                }
+                initialTimings[timing] = timingValue;
+                Thread.Sleep(10);
+            }
+
             if (CurrentTiming == null)
             {
                 // First time running.
                 Console.WriteLine("Welcome!");
-                Console.WriteLine("Please note this program will not tighten primary timings.");
+                Console.WriteLine("Please note this program will not tighten all timings including tCL and tRAS.");
                 Console.WriteLine("As this is the first time you are running this application, an initial memory test will be run to ensure stock settings are stable.");
                 Console.WriteLine();
                 Console.WriteLine($"Frequency: {tweaker.Frequency()}");
                 Console.WriteLine($"Primary Timings: {tweaker.Primaries()}");
                 Console.WriteLine();
-                Console.WriteLine("Press any key to continue...");
-                Console.ReadKey(true);
+                Console.WriteLine("Key binds:");
+                Console.WriteLine("Q - Quit testing and exit the program");
+                Console.WriteLine("S - Skip a memory test");
+                Console.WriteLine("N - Skip a memory test, undo most recent tightening of current timing and move on to the next timing");
+                Console.WriteLine("Press 'Q' to exit or any other key to continue...");
+                if (Console.ReadKey(true).Key == ConsoleKey.Q)
+                {
+                    tweaker.Close();
+                    return;
+                }
                 Console.WriteLine();
 
                 // Set up initial memory test.
@@ -159,7 +184,7 @@ namespace AutoMemOC
                 }
                 if (!testPathOverriden)
                 {
-                    properties.set("MemTestPath", tweakPath);
+                    properties.set("MemTestPath", testPath);
                     properties.save();
                 }
 
@@ -181,6 +206,8 @@ namespace AutoMemOC
                             memTest.Stop();
                             Thread.Sleep(500);
                             memTest.Close();
+
+                            tweaker.Close();
                             return;
                         }
                         else if (key == ConsoleKey.S)
@@ -189,6 +216,8 @@ namespace AutoMemOC
                             memTest.Stop();
                             Thread.Sleep(500);
                             memTest.Close();
+
+                            memTest.Reset();
                             break;
                         }
                     }
@@ -197,6 +226,7 @@ namespace AutoMemOC
                         Console.WriteLine("Found a memory-related error!");
                         memTest.Stop();
                         memTest.Close();
+                        tweaker.Close();
 
                         Console.WriteLine("Your stock settings are unstable! Please correct them by loosening the error-causing timings before running this program again!");
                         Console.WriteLine("Press any key to exit...");
@@ -214,18 +244,8 @@ namespace AutoMemOC
                 // Set up the starting point for tweaking.
                 // Currently, this program tweaks tRCD-tRP first.
                 Timing initialTiming = Timing.tRCD;
-                int currentInitialTimingValue = tweaker.GetTiming(initialTiming);
-                if (currentInitialTimingValue == -1)
-                {
-                    FatalError();
-                    Console.Error.WriteLine("Failed to fetch current " + initialTiming + "!");
-
-                    tweaker.Close();
-                    Console.ReadKey();
-                    return;
-                }
                 CurrentTiming = initialTiming;
-                CurrentTimingValue = currentInitialTimingValue;
+                CurrentTimingValue = initialTimings[initialTiming];
                 Failed = false;
                 properties.save();
             }
@@ -254,6 +274,21 @@ namespace AutoMemOC
                         return;
                     }
 
+                    Console.WriteLine();
+                }
+
+                while (memTest == null)
+                {
+                    Console.WriteLine("Please enter the directory path for a memory tester:");
+                    testPath = Console.In.ReadLine();
+                    if (testPath.Contains("TestMem5") || testPath.Contains("TM5"))
+                    {
+                        memTest = new TestMem5(testPath);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Unknown memory tester.");
+                    }
                     Console.WriteLine();
                 }
             }
@@ -297,6 +332,8 @@ namespace AutoMemOC
                         Console.WriteLine();
                         Console.WriteLine("Press any key to exit...");
                         Console.ReadKey();
+
+                        tweaker.Close();
                         return;
                     }
                     if (!Failed) // If the current timing value did not fail the memory test...
@@ -384,7 +421,7 @@ namespace AutoMemOC
                     }
 
                     bool hadErrors = false;
-                    bool skipped = false;
+                    int skipMode = -1;
                     // Perform the test.
                     while (!memTest.IsFinished())
                     {
@@ -392,6 +429,8 @@ namespace AutoMemOC
                         {
                             FatalError();
                             Console.WriteLine($"{memTest.TestName()} closed!");
+
+                            tweaker.Close();
                             return;
                         }
                         if (Console.KeyAvailable)
@@ -412,7 +451,18 @@ namespace AutoMemOC
                             {
                                 Console.WriteLine();
                                 Console.WriteLine("Skipped memory test!");
-                                skipped = true;
+                                skipMode = 1;
+                                memTest.Stop();
+                                Thread.Sleep(200);
+                                memTest.Close();
+                                Thread.Sleep(200);
+                                break;
+                            }
+                            else if (pressedKey == ConsoleKey.N)
+                            {
+                                Console.WriteLine();
+                                Console.WriteLine("Skipped memory test, untightening and moving on to next timing...");
+                                skipMode = 2;
                                 memTest.Stop();
                                 Thread.Sleep(200);
                                 memTest.Close();
@@ -434,20 +484,40 @@ namespace AutoMemOC
                     Thread.Sleep(100);
                     if (!hadErrors)
                     {
-                        if (!skipped)
+                        if (skipMode == 2)
                         {
-                            memTest.CloseSafely();
-                        }
+                            Console.WriteLine();
 
-                        stableSettings = StableSettings;
-                        stableSettings[CurrentTiming] = CurrentTimingValue;
-                        StableSettings = stableSettings;
-                        Failed = false;
-                        properties.save();
+                            tweaker.SetTiming(currentTiming, stableSettings.ContainsKey(currentTiming) ? stableSettings[currentTiming] : initialTimings[currentTiming]);
+                            Thread.Sleep(100);
+                            tweaker.Apply();
+                            Thread.Sleep(100);
 
-                        if (!skipped)
+                            KeyValuePair<Timing, int> nextTimingPair = FindNextTiming(stableSettings, currentTiming);
+                            if (nextTimingPair.Key == null)
+                            {
+                                return;
+                            }
+
+                            UpdateNextTiming(nextTimingPair, stableSettings);
+                            currentTiming = CurrentTiming;
+                        } else
                         {
-                            Console.WriteLine($"Successfully passed memory test! New {CurrentTiming}: {CurrentTimingValue}");
+                            if (skipMode == -1)
+                            {
+                                memTest.CloseSafely();
+                            }
+
+                            stableSettings = StableSettings;
+                            stableSettings[CurrentTiming] = CurrentTimingValue;
+                            StableSettings = stableSettings;
+                            Failed = false;
+                            properties.save();
+
+                            if (skipMode == -1)
+                            {
+                                Console.WriteLine($"Successfully passed memory test! New {CurrentTiming}: {CurrentTimingValue}");
+                            }
                         }
                     } else
                     {
@@ -754,7 +824,6 @@ namespace AutoMemOC
                 process = null;
             }
             Started = false;
-            Running = false;
         }
 
         protected string GetValue(string clazz, int instance)
