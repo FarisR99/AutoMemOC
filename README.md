@@ -1,6 +1,10 @@
 # AutoMemOC
 Automatic memory overclocking tool.
 
+
+# Project Status
+This project has been abandoned as a Windows update in mid-2020 broke MemTweakIt.
+
 # Important Notes
 * This program only works for Intel platforms and is optimised for 2 DIMM single rank configuration only.
 * This program primarily tightens secondaries and tertiaries. tCL, tRAS and tCWL are untouched as they affect memory training.
